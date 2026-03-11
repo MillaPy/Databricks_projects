@@ -1,0 +1,390 @@
+{
+  "datasets": [
+    {
+      "name": "45fea744",
+      "displayName": "quantity_by_countries",
+      "queryLines": [
+        "-- quantity by countries \r\n",
+        "select sum(QUANTITY) as qnt_sum, round(sum(TOTAL_ORDER)) as total_sales, ORDER_COUNTRY\r\n",
+        "from workspace.supplychaindb.orders_gold \r\n",
+        "where order_status != 'Cancelled' \r\n",
+        "group by ORDER_COUNTRY\r\n",
+        "order by qnt_sum desc"
+      ],
+      "catalog": "workspace",
+      "schema": "supplychaindb"
+    },
+    {
+      "name": "3307cd9b",
+      "displayName": "sales_by_division",
+      "queryLines": [
+        "-- total sales by categories division\r\n",
+        "select sum(QUANTITY) as qnt_sum, round(sum(TOTAL_ORDER)) as total_sales, CATEGORY\r\n",
+        "from workspace.supplychaindb.orders_gold \r\n",
+        "where order_status != 'Cancelled' \r\n",
+        "group by CATEGORY\r\n",
+        "order by total_sales desc\r\n"
+      ]
+    },
+    {
+      "name": "78adacbb",
+      "displayName": "top_5_brands",
+      "queryLines": [
+        "-- top 5 popular brands\r\n",
+        "select sum(QUANTITY) as qnt_sum, round(sum(TOTAL_ORDER)) as total_sales, BRAND\r\n",
+        "from workspace.supplychaindb.orders_gold \r\n",
+        "where order_status != 'Cancelled' \r\n",
+        "group by brand\r\n",
+        "order by qnt_sum desc\r\n",
+        "limit 5\r\n",
+        ";"
+      ]
+    },
+    {
+      "name": "5d352477",
+      "displayName": "qnt_by_month",
+      "queryLines": [
+        "select DATE_TRUNC(\"month\", ORDER_DATE) as month_od, sum(QUANTITY) as sum_qnt --, BRAND, ORDER_COUNTRY\r\n",
+        "from workspace.supplychaindb.orders_gold \r\n",
+        "where order_status != 'Cancelled'\r\n",
+        "group by month_od \r\n",
+        "-- group by BRAND, ORDER_COUNTRY, month_od\r\n",
+        "order by month_od"
+      ]
+    },
+    {
+      "name": "2dc85a77",
+      "displayName": "qty_left_stock",
+      "queryLines": [
+        "with qty_sold as(\r\n",
+        "select og.BRAND, og.COLOR, og.PRODUCT_NAME, og.SIZE, SUM(og.QUANTITY) AS QTY_SOLD, \r\n",
+        "(i.STOCK-qty_sold) AS QTY_LEFT_STOCK\r\n",
+        "from workspace.supplychaindb.orders_gold as og\r\n",
+        "inner join workspace.supplychaindb.inventory as i\r\n",
+        "ON og.BRAND = i.BRAND\r\n",
+        "AND og.PRODUCT_NAME = i.PRODUCT_NAME\r\n",
+        "AND og.COLOR = i.COLOR\r\n",
+        "AND og.SIZE = i.SIZE     \r\n",
+        "WHERE ORDER_STATUS != 'Cancelled' \r\n",
+        "GROUP BY og.BRAND, og.COLOR, og.PRODUCT_NAME, og.SIZE, i.STOCK\r\n",
+        "order by QTY_LEFT_STOCK asc)\r\n",
+        "\r\n",
+        "select * from qty_sold\r\n",
+        "where qty_left_stock < 20\r\n",
+        ";"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "8a3ff31a",
+      "displayName": "sales_first",
+      "layout": [
+        {
+          "widget": {
+            "name": "f505a30c",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "45fea744",
+                  "fields": [
+                    {
+                      "name": "sum(qnt_sum)",
+                      "expression": "SUM(`qnt_sum`)"
+                    },
+                    {
+                      "name": "ORDER_COUNTRY",
+                      "expression": "`ORDER_COUNTRY`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "sum(qnt_sum)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "ORDER_COUNTRY",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "6325e6a5",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "3307cd9b",
+                  "fields": [
+                    {
+                      "name": "sum(total_sales)",
+                      "expression": "SUM(`total_sales`)"
+                    },
+                    {
+                      "name": "CATEGORY",
+                      "expression": "`CATEGORY`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showTitle": false,
+                "showDescription": false
+              },
+              "widgetType": "pie",
+              "encodings": {
+                "angle": {
+                  "fieldName": "sum(total_sales)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "CATEGORY",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "label": {
+                  "show": true
+                },
+                "extra": [
+                  {
+                    "fieldName": "sum(total_sales)"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 11,
+            "width": 12,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "8a31e857",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "78adacbb",
+                  "fields": [
+                    {
+                      "name": "BRAND",
+                      "expression": "`BRAND`"
+                    },
+                    {
+                      "name": "sum(qnt_sum)",
+                      "expression": "SUM(`qnt_sum`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "BRAND",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(qnt_sum)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 6,
+            "width": 6,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "1d453316",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "5d352477",
+                  "fields": [
+                    {
+                      "name": "monthly(month_od)",
+                      "expression": "DATE_TRUNC(\"MONTH\", `month_od`)"
+                    },
+                    {
+                      "name": "sum(sum_qnt)",
+                      "expression": "SUM(`sum_qnt`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "monthly(month_od)",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(sum_qnt)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 6,
+            "width": 6,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "dfd2c727",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "2dc85a77",
+                  "fields": [
+                    {
+                      "name": "COLOR",
+                      "expression": "`COLOR`"
+                    },
+                    {
+                      "name": "sum(QTY_LEFT_STOCK)",
+                      "expression": "SUM(`QTY_LEFT_STOCK`)"
+                    },
+                    {
+                      "name": "sum(QTY_SOLD)",
+                      "expression": "SUM(`QTY_SOLD`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 1,
+              "widgetType": "combo",
+              "encodings": {
+                "x": {
+                  "fieldName": "COLOR",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "primary": {
+                    "fields": [
+                      {
+                        "fieldName": "sum(QTY_LEFT_STOCK)"
+                      }
+                    ]
+                  },
+                  "secondary": {
+                    "fields": [
+                      {
+                        "fieldName": "sum(QTY_SOLD)"
+                      }
+                    ]
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 17,
+            "width": 12,
+            "height": 7
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "807951f3",
+      "displayName": "Global Filters",
+      "layout": [
+        {
+          "widget": {
+            "name": "211135b3",
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-single-select",
+              "encodings": {},
+              "frame": {
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 2
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_GLOBAL_FILTERS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}
